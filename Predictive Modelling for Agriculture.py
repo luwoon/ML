@@ -8,6 +8,7 @@ from sklearn import metrics
 
 crops = pd.read_csv("soil_measures.csv")
 crops.isna().sum()
+# there are no missing values
 crops["crop"].unique()
 
 X = crops[['N', 'P', 'K', 'ph']]
