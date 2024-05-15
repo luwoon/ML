@@ -5,7 +5,9 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 from sklearn.decomposition import PCA
-from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import train_test_split, KFold, cross_val_score
+from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.tree import DecisionTreeClassifier
 
@@ -55,3 +57,61 @@ test_pca = pca.transform(scaled_test_features)
 tree = DecisionTreeClassifier(random_state=10)
 tree.fit(train_pca, train_labels)
 pred_labels_tree = tree.predict(test_pca)
+
+# train logistic regression and predict labels for test set
+logreg = LogisticRegression(random_state=10)
+logreg.fit(train_pca, train_labels)
+pred_labels_logit = logreg.predict(test_pca)
+
+# create classification report for both models
+from sklearn.metrics import classification_report
+class_rep_tree = classification_report(test_labels, pred_labels_tree)
+class_rep_log = classification_report(test_labels, pred_labels_logit)
+
+print("Decision Tree: \n", class_rep_tree)
+print("Logistic Regression: \n", class_rep_log)
+
+# subset only hip-hop tracks, and rock tracks
+hop_only = echo_tracks.loc[echo_tracks["genre_top"]=="Hip-Hop"]
+rock_only = echo_tracks.loc[echo_tracks["genre_top"]=="Rock"]
+
+# balance data by sampling rocks songs to be the same number as there are hip-hop songs
+rock_only = rock_only.sample(hop_only.shape[0], random_state=10)
+
+# concatenate the dataframes rock_only and hop_only
+rock_hop_bal = pd.concat([rock_only, hop_only])
+
+features = rock_hop_bal.drop(['genre_top', 'track_id'], axis=1) 
+labels = rock_hop_bal['genre_top']
+
+train_features, test_features, train_labels, test_labels = train_test_split(features, labels, random_state=10)
+
+train_pca = pca.fit_transform(scaler.fit_transform(train_features))
+test_pca = pca.transform(scaler.transform(test_features))
+
+# train decision tree on the balanced data
+tree = DecisionTreeClassifier(random_state=10)
+tree.fit(train_pca, train_labels)
+pred_labels_tree = tree.predict(test_pca)
+
+# train logistic regression on the balanced data
+logreg = LogisticRegression(random_state=10)
+logreg.fit(train_pca, train_labels)
+pred_labels_logit = logreg.predict(test_pca)
+
+# compare models
+print("Decision Tree: \n", classification_report(test_labels, pred_labels_tree))
+print("Logistic Regression: \n", classification_report(test_labels, pred_labels_logit))
+
+# evaluate models using cross-validation
+tree_pipe = Pipeline([("scaler", StandardScaler()), ("pca", PCA(n_components=6)), 
+                      ("tree", DecisionTreeClassifier(random_state=10))])
+logreg_pipe = Pipeline([("scaler", StandardScaler()), ("pca", PCA(n_components=6)), 
+                        ("logreg", LogisticRegression(random_state=10))])
+
+kf = KFold(n_splits=10)
+
+tree_score = cross_val_score(tree_pipe, features, labels, cv=kf)
+logit_score = cross_val_score(logreg_pipe, features, labels, cv=kf)
+
+print("Decision Tree:", np.mean(tree_score), "Logistic Regression:", np.mean(logit_score))
