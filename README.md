@@ -1,3 +1,3 @@
 # ML
 
-DataCamp: Supervised Learning with scikit-learn
+Projects from DataCamp on supervised learning with scikit-learn
