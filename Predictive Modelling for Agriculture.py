@@ -1,4 +1,4 @@
-# supervised learning and feature selection to pick the most important feature that could help predict the best crop for the field
+# Supervised learning and feature selection to pick the most important feature that could help predict the best crop for the field
 
 import pandas as pd
 from sklearn.linear_model import LogisticRegression
@@ -8,7 +8,7 @@ from sklearn import metrics
 
 crops = pd.read_csv("soil_measures.csv")
 crops.isna().sum()
-# there are no missing values
+# There are no missing values
 crops["crop"].unique()
 
 X = crops[['N', 'P', 'K', 'ph']]
@@ -28,4 +28,4 @@ for feature in ["N", "P", "K", "ph"]:
 # F1-score for K: 0.21580486168010007
 # F1-score for ph: 0.06787631271947597
   
-# the best predictive feature is "K"
+# The best predictive feature is "K"
